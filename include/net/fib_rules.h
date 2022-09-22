@@ -1,72 +1,120 @@
-#ifndef __LINUX_FIB_RULES_H
-#define __LINUX_FIB_RULES_H
+#ifndef __NET_FIB_RULES_H
+#define __NET_FIB_RULES_H
 
 #include <linux/types.h>
-#include <linux/rtnetlink.h>
+#include <linux/slab.h>
+#include <linux/netdevice.h>
+#include <linux/fib_rules.h>
+#include <net/flow.h>
+#include <net/rtnetlink.h>
 
-/* rule is permanent, and cannot be deleted */
-#define FIB_RULE_PERMANENT	0x00000001
-#define FIB_RULE_INVERT		0x00000002
-#define FIB_RULE_UNRESOLVED	0x00000004
-#define FIB_RULE_IIF_DETACHED	0x00000008
-#define FIB_RULE_DEV_DETACHED	FIB_RULE_IIF_DETACHED
-#define FIB_RULE_OIF_DETACHED	0x00000010
-
-/* try to find source address in routing lookups */
-#define FIB_RULE_FIND_SADDR	0x00010000
-
-struct fib_rule_hdr {
-	__u8		family;
-	__u8		dst_len;
-	__u8		src_len;
-	__u8		tos;
-
-	__u8		table;
-	__u8		res1;	/* reserved */
-	__u8		res2;	/* reserved */
-	__u8		action;
-
-	__u32		flags;
+struct fib_rule {
+	struct list_head	list;
+	atomic_t		refcnt;
+	int			iifindex;
+	int			oifindex;
+	u32			mark;
+	u32			mark_mask;
+	u32			pref;
+	u32			flags;
+	u32			table;
+	u8			action;
+	u32			target;
+	struct fib_rule __rcu	*ctarget;
+	char			iifname[IFNAMSIZ];
+	char			oifname[IFNAMSIZ];
+	struct rcu_head		rcu;
+	struct net *		fr_net;
 };
 
-enum {
-	FRA_UNSPEC,
-	FRA_DST,	/* destination address */
-	FRA_SRC,	/* source address */
-	FRA_IIFNAME,	/* interface name */
-#define FRA_IFNAME	FRA_IIFNAME
-	FRA_GOTO,	/* target to jump to (FR_ACT_GOTO) */
-	FRA_UNUSED2,
-	FRA_PRIORITY,	/* priority/preference */
-	FRA_UNUSED3,
-	FRA_UNUSED4,
-	FRA_UNUSED5,
-	FRA_FWMARK,	/* mark */
-	FRA_FLOW,	/* flow/class id */
-	FRA_UNUSED6,
-	FRA_UNUSED7,
-	FRA_UNUSED8,
-	FRA_TABLE,	/* Extended table id */
-	FRA_FWMASK,	/* mask for netfilter mark */
-	FRA_OIFNAME,
-	__FRA_MAX
+struct fib_lookup_arg {
+	void			*lookup_ptr;
+	void			*result;
+	struct fib_rule		*rule;
+	int			flags;
+#define FIB_LOOKUP_NOREF	1
 };
 
-#define FRA_MAX (__FRA_MAX - 1)
+struct fib_rules_ops {
+	int			family;
+	struct list_head	list;
+	int			rule_size;
+	int			addr_size;
+	int			unresolved_rules;
+	int			nr_goto_rules;
 
-enum {
-	FR_ACT_UNSPEC,
-	FR_ACT_TO_TBL,		/* Pass to fixed table */
-	FR_ACT_GOTO,		/* Jump to another rule */
-	FR_ACT_NOP,		/* No operation */
-	FR_ACT_RES3,
-	FR_ACT_RES4,
-	FR_ACT_BLACKHOLE,	/* Drop without notification */
-	FR_ACT_UNREACHABLE,	/* Drop with ENETUNREACH */
-	FR_ACT_PROHIBIT,	/* Drop with EACCES */
-	__FR_ACT_MAX,
+	int			(*action)(struct fib_rule *,
+					  struct flowi *, int,
+					  struct fib_lookup_arg *);
+	int			(*match)(struct fib_rule *,
+					 struct flowi *, int);
+	int			(*configure)(struct fib_rule *,
+					     struct sk_buff *,
+					     struct fib_rule_hdr *,
+					     struct nlattr **);
+	void			(*delete)(struct fib_rule *);
+	int			(*compare)(struct fib_rule *,
+					   struct fib_rule_hdr *,
+					   struct nlattr **);
+	int			(*fill)(struct fib_rule *, struct sk_buff *,
+					struct fib_rule_hdr *);
+	u32			(*default_pref)(struct fib_rules_ops *ops);
+	size_t			(*nlmsg_payload)(struct fib_rule *);
+
+	/* Called after modifications to the rules set, must flush
+	 * the route cache if one exists. */
+	void			(*flush_cache)(struct fib_rules_ops *ops);
+
+	int			nlgroup;
+	const struct nla_policy	*policy;
+	struct list_head	rules_list;
+	struct module		*owner;
+	struct net		*fro_net;
+	struct rcu_head		rcu;
 };
 
-#define FR_ACT_MAX (__FR_ACT_MAX - 1)
+#define FRA_GENERIC_POLICY \
+	[FRA_IIFNAME]	= { .type = NLA_STRING, .len = IFNAMSIZ - 1 }, \
+	[FRA_OIFNAME]	= { .type = NLA_STRING, .len = IFNAMSIZ - 1 }, \
+	[FRA_PRIORITY]	= { .type = NLA_U32 }, \
+	[FRA_FWMARK]	= { .type = NLA_U32 }, \
+	[FRA_FWMASK]	= { .type = NLA_U32 }, \
+	[FRA_TABLE]     = { .type = NLA_U32 }, \
+	[FRA_GOTO]	= { .type = NLA_U32 }
 
+static inline void fib_rule_get(struct fib_rule *rule)
+{
+	atomic_inc(&rule->refcnt);
+}
+
+static inline void fib_rule_put_rcu(struct rcu_head *head)
+{
+	struct fib_rule *rule = container_of(head, struct fib_rule, rcu);
+	release_net(rule->fr_net);
+	kfree(rule);
+}
+
+static inline void fib_rule_put(struct fib_rule *rule)
+{
+	if (atomic_dec_and_test(&rule->refcnt))
+		call_rcu(&rule->rcu, fib_rule_put_rcu);
+}
+
+static inline u32 frh_get_table(struct fib_rule_hdr *frh, struct nlattr **nla)
+{
+	if (nla[FRA_TABLE])
+		return nla_get_u32(nla[FRA_TABLE]);
+	return frh->table;
+}
+
+extern struct fib_rules_ops *fib_rules_register(const struct fib_rules_ops *, struct net *);
+extern void fib_rules_unregister(struct fib_rules_ops *);
+
+extern int			fib_rules_lookup(struct fib_rules_ops *,
+						 struct flowi *, int flags,
+						 struct fib_lookup_arg *);
+extern int			fib_default_rule_add(struct fib_rules_ops *,
+						     u32 pref, u32 table,
+						     u32 flags);
+extern u32			fib_default_rule_pref(struct fib_rules_ops *ops);
 #endif
