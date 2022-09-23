@@ -28,7 +28,8 @@ config RDAWFMAC
 if RDAWFMAC
 config RDAWFMAC_WEXT
 	bool "Enable WEXT support"
-	depends on RDAWFMAC && CFG80211 = n
+	depends on RDAWFMAC
+	depends on CFG80211
 	select WIRELESS_EXT
 	select WEXT_PRIV
 	default n

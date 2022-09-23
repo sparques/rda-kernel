@@ -48,6 +48,11 @@
 #include <wland_p2p.h>
 #include <wland_cfg80211.h>
 
+/* Accept MAC address of the form macaddr=0x08,0x00,0x20,0x30,0x40,0x50 */
+static int macaddr[6];
+module_param_array(macaddr, int, NULL, 0);
+MODULE_PARM_DESC(macaddr, "WLAN MAC address");
+
 void wland_txflowcontrol(struct device *dev, bool state)
 {
 	int i = 0;
@@ -76,7 +81,7 @@ void wland_txflowcontrol(struct device *dev, bool state)
 
 int wland_bus_start(struct device *dev)
 {
-	int ret = -EINVAL;
+	int ret = -EINVAL, i;
 	struct wland_bus *bus_if = dev_get_drvdata(dev);
 	struct wland_private *drvr = bus_if->drvr;
 	struct wland_if *ifp = NULL;
@@ -120,8 +125,21 @@ int wland_bus_start(struct device *dev)
 			return -ENODEV;
 		}
 	}
+#else
+	for (i = 0; i < 6; i++) {
+		if (macaddr[i] != 0)
+			break;
+	}
+	if (i == 6) {
+		random_ether_addr(mac_addr);
+	} else {
+		for (i = 0; i < 6; i++) {
+			mac_addr[i] = macaddr[i] & 0xff;
+		}
+	}
+	mac_addr[0] &= 0xfe;	/* clear multicast bit */
+	mac_addr[0] |= 0x02;	/* set local assignment bit (IEEE802) */
 #endif
-
 	/*
 	 * add primary networking interface
 	 */

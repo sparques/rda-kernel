@@ -190,8 +190,8 @@ enum WLAND_CHIP_VERSION {
 //#define WLAND_FPGA_SUPPORT
 
 /* define for use random mac address  */
-#define WLAND_MACADDR_DYNAMIC
-#define USE_MAC_FROM_RDA_NVRAM
+//#define WLAND_MACADDR_DYNAMIC
+//#define USE_MAC_FROM_RDA_NVRAM
 
 /* define support cfg80211 or wext mode */
 #define WLAND_CFG80211_SUPPORT
