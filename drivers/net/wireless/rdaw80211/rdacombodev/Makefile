@@ -16,7 +16,6 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 subdir-ccflags-y := -Werror
-subdir-ccflags-y += -Iinclude_rda
 
 MODULEPFX := rdacombodev
 

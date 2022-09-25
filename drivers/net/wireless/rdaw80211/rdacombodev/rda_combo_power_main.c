@@ -3,6 +3,21 @@
  This file created by albert RDA Inc
  */
 
+#ifdef CONFIG_BT_RANDADDR
+#define USE_MAC_FROM_RDA_NVRAM
+#ifdef USE_MAC_FROM_RDA_NVRAM
+#include <plat/md_sys.h>
+struct bt_mac_info {
+	u16 activated;
+	u16 NAP;
+	u8  UAP;
+	u32 LAP;
+};
+#define BT_MAC_ACTIVATED_FLAG 0x1d0e
+#endif /*USE_MAC_FROM_RDA_NVRAM*/
+#define BT_NVRAM_FILE_NAME "/data/misc/bluetooth/BTMAC"
+#endif
+
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>
@@ -30,28 +45,12 @@
 #include <linux/regulator/consumer.h>
 #include <mach/regulator.h>
 
-#include "rda/tgt_ap_board_config.h"
-#include "rda/tgt_ap_gpio_setting.h"
+#include <rda/tgt_ap_board_config.h>
+#include <rda/tgt_ap_gpio_setting.h>
 #include "rda_combo.h"
 #include <linux/crc16.h>
 #include <linux/firmware.h>
 #include <linux/vmalloc.h>
-
-#ifdef CONFIG_BT_RANDADDR
-#define USE_MAC_FROM_RDA_NVRAM
-#ifdef USE_MAC_FROM_RDA_NVRAM
-
-#include <plat/md_sys.h>
-struct bt_mac_info {
-	u16 activated;
-	u16 NAP;
-	u8  UAP;
-	u32 LAP;
-};
-#define BT_MAC_ACTIVATED_FLAG 0x1d0e
-#endif /*USE_MAC_FROM_RDA_NVRAM*/
-#define BT_NVRAM_FILE_NAME "/data/misc/bluetooth/BTMAC"
-#endif
 
 static struct mutex i2c_rw_lock;
 static struct rfkill *wlan_rfkill = NULL;
@@ -324,7 +323,6 @@ void bt_get_random_address(char *buf)
 EXPORT_SYMBOL(bt_get_random_address);
 
 #endif
-
 
 /*enable or disable 26m clock regulator */
 void enable_26m_regulator(u8 mask)
