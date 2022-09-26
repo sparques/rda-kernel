@@ -25,7 +25,7 @@
  ****************************************************************************/
 
 /* init_scan support */
-//#define WLAND_INIT_SCAN_SUPPORT
+#define WLAND_INIT_SCAN_SUPPORT
 
 /* Driver Version Sync With Source Server */
 #define WLAND_VER_MAJ                           5
@@ -159,7 +159,7 @@ enum WLAND_CHIP_VERSION {
 #define SKIP_REPORT_CHANNEL_14
 
 // Low snr agc setting
-#define CHINA_VERSION
+// #define CHINA_VERSION
 
 /* CDC flag definitions */
 #define CDC_DCMD_LEN_MASK	                    0x0FFF	/* id an cmd pairing */

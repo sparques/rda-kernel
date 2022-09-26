@@ -99,8 +99,7 @@ int wland_bus_start(struct device *dev)
 		return -EINVAL;
 	}
 #if defined(USE_MAC_FROM_RDA_NVRAM)
-	ret = wlan_read_mac_from_nvram(mac_addr);
-	if (ret) {
+	if (wland_get_mac_address(mac_addr) != ETH_ALEN) {
 		WLAND_ERR("nvram:get a random ether address\n");
 		random_ether_addr(mac_addr);
 		if (ret == -EINVAL)
@@ -133,6 +132,7 @@ int wland_bus_start(struct device *dev)
 	}
 
 #ifdef WLAND_P2P_SUPPORT
+	u8 temp_addr[ETH_ALEN];
 	temp_addr[0] |= 0x02;
 	temp_addr[4] ^= 0x80;
 

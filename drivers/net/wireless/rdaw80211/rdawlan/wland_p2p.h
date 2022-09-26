@@ -208,7 +208,7 @@ extern s32 notify_p2p_action_tx_complete(struct wland_if *ifp,
 extern bool wland_p2p_send_action_frame(struct wland_cfg80211_info *cfg,
 	struct net_device *ndev, struct wland_fil_af_params_le *af_params);
 extern bool wland_p2p_scan_finding_common_channel(struct wland_cfg80211_info
-	*cfg, struct wland_bss_info_le *bi, u8 * ie);
+	*cfg, struct wland_bss_info_le *bi);
 
 #endif /* WLAND_P2P_SUPPORT */
 #endif /* _WLAND_P2P_H_     */

@@ -133,7 +133,7 @@ void rda_start_host(struct usb_bus *host)
 	u8 devctl;
 	struct usb_hcd * hcd;
 	struct musb *musb;
-	//u8 power;
+	u8 power;
 	unsigned long flags;
 	struct usb_otg	*otg;
 	unsigned long timeout;
@@ -164,8 +164,7 @@ void rda_start_host(struct usb_bus *host)
 	musb->double_buffer_not_ok = true;
 	spin_unlock_irqrestore(&musb->lock, flags);
 
-	// timeout was orignally 1000 msec, upping to 10,000 msec makes USB work!
-	timeout = jiffies + msecs_to_jiffies(10000);
+	timeout = jiffies + msecs_to_jiffies(1000);
 	while (musb_readb(musb->mregs, MUSB_DEVCTL) & 0x80) {
 
 		cpu_relax();
@@ -176,6 +175,8 @@ void rda_start_host(struct usb_bus *host)
 			break;
 		}
 	}
+
+
 }
 
 void rda_stop_host(struct usb_bus *host)

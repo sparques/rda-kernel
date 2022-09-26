@@ -1053,7 +1053,7 @@ static struct v4l2_ctrl_config rda_sensor_ctrls[] = {
 static int rda_sensor_video_probe(struct i2c_client *client)
 {
 	struct rda_sensor_priv *priv = to_rda_sensor(client);
-	printk(KERN_ERR "%s: priv=%p\n", __func__, priv);
+	printk(KERN_INFO "%s: priv=%p\n", __func__, priv);
 	if (!priv)
 		return -EINVAL;
 	priv->model = 0x2518;
@@ -1070,9 +1070,9 @@ static int rda_sensor_probe(struct i2c_client *client,
 	struct v4l2_ctrl *ctrl = NULL;
 	int num = ARRAY_NUM(rda_sensor_ctrls);
 	int ret;
-	printk(KERN_ERR "%s: i2c_client %p\n", __func__, client);
-	printk(KERN_ERR "%s: i2c_dev_id %ld\n", __func__, did->driver_data);
-	printk(KERN_ERR "%s: i2c_addr %x\n", __func__, client->addr);
+	printk(KERN_INFO "%s: i2c_client %p\n", __func__, client);
+	printk(KERN_INFO "%s: i2c_dev_id %ld\n", __func__, did->driver_data);
+	printk(KERN_INFO "%s: i2c_addr %x\n", __func__, client->addr);
 
 	if (!ssdd) {
 		printk(KERN_ERR "%s: missing platform data!\n", __func__);
@@ -1099,7 +1099,7 @@ static int rda_sensor_probe(struct i2c_client *client,
 	mutex_unlock(&rda_sensor_mutex);
 
 	v4l2_i2c_subdev_init(&priv->subdev, client, &rda_sensor_subdev_ops);
-	printk(KERN_ERR "%s: sd->grp_id %x\n", __func__, priv->subdev.grp_id);
+	printk(KERN_INFO "%s: sd->grp_id %x\n", __func__, priv->subdev.grp_id);
 	v4l2_ctrl_handler_init(&priv->hdl, num);
 	while (0 < num--) {
 		if (rda_sensor_ctrls[num].type == V4L2_CTRL_TYPE_MENU)
@@ -1137,7 +1137,7 @@ static int rda_sensor_probe(struct i2c_client *client,
 	if (did->driver_data == 0)
 		led_trigger_register_simple(LED_CAM_FLASH, &rda_sensor_led);
 #endif
-	printk(KERN_ERR "%s: i2c_client %p\n", __func__, client);
+	printk(KERN_INFO "%s: i2c_client %p\n", __func__, client);
 
 	return 0;
 }

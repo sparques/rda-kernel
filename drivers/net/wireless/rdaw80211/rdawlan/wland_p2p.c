@@ -1083,7 +1083,7 @@ static void wland_p2p_afx_handler(struct work_struct *work)
 		 * 100ms ~ 300ms
 		 */
 		err = wland_p2p_discover_listen(p2p, afx_hdl->my_listen_chan,
-			100 * (1 + random32() % 3));
+			100 * (1 + prandom_u32() % 3));
 	else
 		err = wland_p2p_act_frm_search(p2p, afx_hdl->peer_listen_chan);
 

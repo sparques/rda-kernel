@@ -1612,7 +1612,7 @@ void *wland_sdio_probe(struct osl_info *osh, struct wland_sdio_dev *sdiodev)
 	bus_if->chip = (rda_wlan_version() & CHIP_ID_MASK);
 #endif /*WLAND_FPGA_SUPPORT */
 
-	WLAND_ERR("--------------- Chipid: 0x%x(%s) ---------------\n",
+	WLAND_DBG(SDIO, TRACE, "--------------- Chipid: 0x%x(%s) ---------------\n",
 		bus_if->chip, wland_version_string[bus_if->chip]);
 
 	/*

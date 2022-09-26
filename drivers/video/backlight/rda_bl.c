@@ -44,7 +44,7 @@
 extern int rda_fb_register_client(struct notifier_block * nb);
 extern int rda_fb_unregister_client(struct notifier_block *nb);
 
-#define RDA_FB_TIMEOUT	10000
+#define RDA_FB_TIMEOUT	1000
 
 struct rda_bl {
 	struct backlight_device *bldev;
@@ -144,7 +144,7 @@ static int rda_bl_set_intensity(struct backlight_device *bd)
 		timeout_ret = wait_for_completion_timeout(&rda_bl->fb_done,
 			msecs_to_jiffies(fb_timeout));
 		if (timeout_ret == 0) {
-			pr_err("<rda-bl> : fb doesn't transit frame, timeout(%ld ms)\n", fb_timeout);
+			pr_debug("<rda-bl> : fb doesn't transit frame, timeout(%ld ms)\n", fb_timeout);
 		}
 		mutex_lock(&rda_bl->pending_lock);
 	} else if (rda_bl->fb_count < 0) {

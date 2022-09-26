@@ -2991,7 +2991,7 @@ static s32 notify_escan_handler(struct wland_if *ifp,
 		}
 #endif /*SKIP_REPORT_CHANNEL_14 */
 #ifdef WLAND_P2P_SUPPORT
-		if (wland_p2p_scan_finding_common_channel(cfg, bss_info_le))
+		if (wland_p2p_scan_finding_common_channel(cfg, &bss_info_le))
 			goto exit;
 #endif /* WLAND_P2P_SUPPORT */
 
@@ -5246,11 +5246,11 @@ void cfg80211_reg_notifier(struct wiphy *wiphy,
 	/*
 	 * We support only REGDOM_SET_BY_USER as of now
 	 */
-	if (request->initiator != NL80211_REGDOM_SET_BY_USER) {
-		WLAND_ERR("reg_notifier for intiator:%d not supported \n",
-			request->initiator);
-		return;
-	}
+	//if (request->initiator != NL80211_REGDOM_SET_BY_USER) {
+	//	WLAND_ERR("reg_notifier for intiator:%d not supported \n",
+	//		request->initiator);
+	//	return;
+	//}
 
 	if (request->alpha2[0] == '0' && request->alpha2[1] == '0') {
 		/*
@@ -5292,11 +5292,11 @@ int cfg80211_reg_notifier(struct wiphy *wiphy,
 	/*
 	 * We support only REGDOM_SET_BY_USER as of now
 	 */
-	if (request->initiator != NL80211_REGDOM_SET_BY_USER) {
-		WLAND_ERR("reg_notifier for intiator:%d not supported \n",
-			request->initiator);
-		return err;
-	}
+	//if (request->initiator != NL80211_REGDOM_SET_BY_USER) {
+	//	WLAND_ERR("reg_notifier for intiator:%d not supported \n",
+	//		request->initiator);
+	//	return err;
+	//}
 
 	if (request->alpha2[0] == '0' && request->alpha2[1] == '0') {
 		/*
@@ -5461,9 +5461,9 @@ static struct wiphy *wland_setup_wiphy(struct device *phydev)
 	//has its own custom regulatory domain and cannot identify the
 	//ISO /IEC 3166 alpha2 it belongs to. When this is enabled
 	//we will disregard the first regulatory hint (when the initiator is %REGDOM_SET_BY_CORE).
-	wiphy->flags |= WIPHY_FLAG_CUSTOM_REGULATORY;
+	//wiphy->flags |= WIPHY_FLAG_CUSTOM_REGULATORY;
 
-	WLAND_DBG(CFG80211, TRACE, "Registering custom regulatory.\n");
+	//WLAND_DBG(CFG80211, TRACE, "Registering custom regulatory.\n");
 
 	/*
 	 *the driver's regulatory notification callback,
@@ -5472,7 +5472,7 @@ static struct wiphy *wland_setup_wiphy(struct device *phydev)
 	 */
 	wiphy->reg_notifier = cfg80211_reg_notifier;
 
-	wiphy_apply_custom_regulatory(wiphy, &wland_regdom);
+	//wiphy_apply_custom_regulatory(wiphy, &wland_regdom);
 
 	err = wiphy_register(wiphy);
 	if (unlikely(err < 0)) {
@@ -5726,7 +5726,7 @@ static s32 notify_connect_status(struct wland_if *ifp,
 		ifp->vif->mode);
 
 	if (!check_vif_up(ifp->vif)) {
-		WLAND_ERR("Vif Not SetUp(event:%d,reason:%d)\n", e->event_code,
+		WLAND_DBG(CFG80211, TRACE, "Device is not ready - vif not set up (event:%d,reason:%d)\n", e->event_code,
 			e->reason);
 		err = -EINVAL;
 		return err;
@@ -6360,7 +6360,8 @@ s32 wland_cfg80211_up(struct net_device * ndev)
 	set_bit(VIF_STATUS_READY, &ifp->vif->sme_state);
 
 	if (cfg->dongle_up) {
-		WLAND_ERR("dongle up\n");
+		WLAND_DBG(CFG80211, TRACE, "dongle is already up and received another up request\n");
+		//WLAND_ERR("dongle up\n");
 		goto up_exit;
 	}
 
